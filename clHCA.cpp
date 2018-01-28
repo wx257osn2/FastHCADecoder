@@ -518,7 +518,7 @@ bool clHCA::Decrypt(const char *filenameHCA) {
 //--------------------------------------------------
 // Analyze and store information about HCA
 //-------------------------------------------------
-bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, double volume, int mode, int loop)
+bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float volume, int mode, int loop)
 {
     wavptr = nullptr;
     sz = 0;
@@ -777,58 +777,6 @@ unsigned int clHCA::get_blockSize() const
 {
     return _blockSize;
 }
-
-//--------------------------------------------------
-// エンコードしてHCAファイルに保存
-//--------------------------------------------------
-/*bool clHCA::EncodeFromWavefile(const char *filenameWAV,const char *filenameHCA,float volume){
-
-// チェック
-if(!(filenameWAV))return false;
-
-// WAVファイルを開く
-FILE *fp;
-if(fopen_s(&fp,filenameWAV,"rb"))return false;
-
-// 保存
-if(!EncodeFromWavefileStream(fp,filenameHCA,volume)){fclose(fp);return false;}
-
-// 閉じる
-fclose(fp);
-
-return true;
-}
-bool clHCA::EncodeFromWavefileStream(void *fpWAV,const char *filenameHCA,float volume){
-
-// チェック
-if(!(fpWAV&&filenameHCA))return false;
-
-//
-FILE *fp1=(FILE *)fpWAV;
-unsigned int address=ftell(fp1);
-
-// ヘッダチェック
-struct stWAVEHeader{
-unsigned int riff;
-unsigned int riffSize;
-unsigned int wave;
-unsigned int fmt;
-unsigned int fmtSize;
-unsigned short fmtType;
-unsigned short fmtChannelCount;
-unsigned int fmtSamplingRate;
-unsigned int fmtSamplesPerSec;
-unsigned short fmtSamplingSize;
-unsigned short fmtBitCount;
-}header;
-memset(&header,0,sizeof(header));
-fread(&header,sizeof(header),1,fp1);
-if(!(header.riff==0x46464952&&header.wave==0x45564157&&header.fmt==0x20746D66&&(header.fmtType==1||header.fmtType==3)))return false;
-
-//@@@@@@@@@@@@@@@@@@@@@@@
-
-return true;
-}*/
 
 //--------------------------------------------------
 // ATH

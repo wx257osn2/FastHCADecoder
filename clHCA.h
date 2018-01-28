@@ -135,7 +135,7 @@ private:
     unsigned int _ciph_type;
     unsigned int _ciph_key1;
     unsigned int _ciph_key2;
-    double _rva_volume;
+    float _rva_volume;
     unsigned int _comm_len;
     char *_comm_comment;
     class clATH {
@@ -192,7 +192,7 @@ private:
         void Decode5(int index);
     };
     bool PrepDecode(stChannel* channels, unsigned int numthreads);
-    bool Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, double volume = 1., int mode = 16, int loop = 0);
+    bool Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float volume = 1.0f, int mode = 16, int loop = 0);
     void AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*& outputwavptr, unsigned int chunksize, Semaphore& wavoutsem);
     private:
     stChannel _channel[0x10];

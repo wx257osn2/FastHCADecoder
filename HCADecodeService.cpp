@@ -68,7 +68,7 @@ void HCADecodeService::cancel_decode(void* ptr)
     }
     if (workingrequest == ptr)
     {
-        blocks.clear();
+		cursor = -1;
         workingrequest = nullptr;
     }
     mutex.unlock();
@@ -95,19 +95,17 @@ void HCADecodeService::wait_on_request(void* ptr)
 			goto START;
 		}
 	}
-    while (workingrequest == ptr && !blocks.empty())
+	mutex.unlock();
+    while (workingrequest == ptr && cursor != -1)
     {
-        mutex.unlock();
         finsem.wait();
-        mutex.lock();
     }
-    mutex.unlock();
 }
 
 void HCADecodeService::wait_for_finish()
 {
     mutex.lock();
-    while(!filelist.empty() || !blocks.empty())
+    while(!filelist.empty() || cursor != -1)
     {
         mutex.unlock();
         finsem.wait();
@@ -116,7 +114,7 @@ void HCADecodeService::wait_for_finish()
     mutex.unlock();
 }
 
-std::pair<void*, size_t> HCADecodeService::decode(const char* hcafilename, unsigned int decodefromsample, unsigned int ciphKey1, unsigned int ciphKey2, double volume, int mode, int loop)
+std::pair<void*, size_t> HCADecodeService::decode(const char* hcafilename, unsigned int decodefromsample, unsigned int ciphKey1, unsigned int ciphKey2, float volume, int mode, int loop)
 {
     clHCA hca(ciphKey1, ciphKey2);
     void* wavptr = nullptr;
@@ -152,28 +150,28 @@ void HCADecodeService::Main_Thread()
         workingfile.PrepDecode(channels, numthreads);
         unsigned int blockCount = (workingfile.get_blockCount() * (chunksize + 1)) / chunksize;
         // initiate playback right away
+		blocks.resize(blockCount/chunksize + 1);
+		cursor = 0;
         for (unsigned int i = (blocknum/chunksize)*chunksize; i < blockCount + blocknum; i += chunksize)
         {
-            blocks.push_back(i % blockCount);
+            blocks[cursor++] = i % blockCount;
         }
-        while (!blocks.empty())
-        {
-            mutex.unlock();
+		--cursor;
+		mutex.unlock();
+		while(cursor >= 0)
+		{
             mainsem.wait();
             for (unsigned int i = 0; i < numthreads; ++i)
             {
-                mutex.lock();
-                if (workingblocks[i] == -1 && !blocks.empty())
+                if (workingblocks[i] == -1 && cursor >= 0)
                 {
-					workingblocks[i] = blocks.front();
-                    blocks.pop_front();
+					workingblocks[i] = blocks[cursor--];
                     workersem[i].notify();
                 }
-                mutex.unlock();
             }
             mainsem.notify();
-            mutex.lock();
         }
+		mutex.lock();
 		for (unsigned int i = 0; i < numthreads; ++i)
 		{
 			while (workingblocks[i] != -1); // busy wait for threads
