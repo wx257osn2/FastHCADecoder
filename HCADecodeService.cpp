@@ -1,4 +1,4 @@
-#include <map>
+﻿#include <map>
 #include "HCADecodeService.h"
 #include "clHCA.h"
 
@@ -9,7 +9,7 @@ HCADecodeService::HCADecodeService()
 	  workingblocks{ new int[this->numthreads] },
 	  workersem{ new Semaphore[this->numthreads]{} },
 	  channels{ new clHCA::stChannel[0x10 * this->numthreads] },
-	  chunksize{ 16 },
+	  chunksize{ 24 },
 	  datasem{ 0 },
 	  finsem{ 0 },
 	  numchannels{ 0 },
@@ -25,13 +25,13 @@ HCADecodeService::HCADecodeService()
 }
 
 HCADecodeService::HCADecodeService(unsigned int numthreads, unsigned int chunksize)
-    : numthreads{ numthreads ? numthreads : 1 },
+    : numthreads{ numthreads ? numthreads : (std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 1) },
 	  mainsem{ this->numthreads },
 	  wavoutsem{ this->numthreads },
 	  workingblocks{ new int[this->numthreads] },
 	  workersem{ new Semaphore[this->numthreads]{} },
 	  channels{ new clHCA::stChannel[0x10 * this->numthreads] },
-	  chunksize{ chunksize ? chunksize : 16 },
+	  chunksize{ chunksize ? chunksize : 24 },
 	  datasem{ 0 },
 	  finsem{ 0 },
 	  numchannels{ 0 },

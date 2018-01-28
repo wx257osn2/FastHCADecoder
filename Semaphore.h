@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
@@ -12,7 +12,7 @@ public:
     inline void notify()
     {
         std::unique_lock<std::mutex> lock(mtx);
-        count++;
+        ++count;
         cv.notify_one();
     }
 
@@ -23,7 +23,7 @@ public:
         while (count == 0) {
             cv.wait(lock);
         }
-        count--;
+        --count;
     }
 
 private:
