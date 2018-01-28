@@ -14,6 +14,7 @@ HCADecodeService::HCADecodeService()
 	  finsem{ 0 },
 	  numchannels{ 0 },
 	  workingrequest{ nullptr },
+	  cursor{ -1 },
 	  shutdown{ false }
 {
     for (unsigned int i = 0; i < this->numthreads; ++i)
@@ -36,6 +37,7 @@ HCADecodeService::HCADecodeService(unsigned int numthreads, unsigned int chunksi
 	  finsem{ 0 },
 	  numchannels{ 0 },
 	  workingrequest{ nullptr },
+	  cursor{ -1 },
 	  shutdown{ false }
 {
     for (unsigned int i = 0; i < this->numthreads; ++i)
