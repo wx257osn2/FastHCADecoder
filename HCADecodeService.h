@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <thread>
-#include <deque>
+#include <vector>
 #include <map>
 #include "Semaphore.h"
 #include "clHCA.h"
@@ -23,9 +23,9 @@ private:
     unsigned int numthreads, numchannels, chunksize;
     void* workingrequest;
     std::thread dispatchthread;
-    std::deque<std::thread> worker_threads;
+    std::vector<std::thread> worker_threads;
     std::map<std::pair<void*, unsigned int>, clHCA> filelist;
-    std::deque<unsigned int> blocks;
+    std::vector<unsigned int> blocks;
     int* workingblocks;
 	int cursor;
     Semaphore* workersem;
