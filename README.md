@@ -1,5 +1,7 @@
 # HCAデコーダ
 
+This program is strictly for decoding to WAV quickly. If you need a HCA streaming library, consider using [libcgss](https://github.com/hozuki/libcgss).
+
 # Changes to original
  - Multithreaded CRI HCA decoding (much higher performance)
  - Fixed data chunk size
@@ -36,7 +38,7 @@
     音量 = 1(倍)
     ビットモード = 16(ビット)
     ループ回数 = 0(回)
-    復号鍵 = CC55463930DBE1AB ※PSO2で使われている鍵
+    復号鍵 = 0002B875BC731A85 ※ミリシタで使われている鍵
   です。
 
   HCAファイルにループ情報が入っていた場合、WAVEファイルにsmplチャンクを追加してます。
