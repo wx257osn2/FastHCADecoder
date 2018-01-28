@@ -153,12 +153,12 @@ void HCADecodeService::Main_Thread()
         unsigned int blockCount = (workingfile.get_blockCount() * (chunksize + 1)) / chunksize;
         // initiate playback right away
 		blocks.resize(blockCount/chunksize + 1);
-		cursor = 0;
+		cursor = blockCount/chunksize + 1;
         for (unsigned int i = (blocknum/chunksize)*chunksize; i < blockCount + blocknum; i += chunksize)
         {
-            blocks[cursor++] = i % blockCount;
+            blocks[--cursor] = i % blockCount;
         }
-		--cursor;
+		cursor = blockCount / chunksize - 1;
 		mutex.unlock();
 		while(cursor >= 0)
 		{
