@@ -1,5 +1,7 @@
 # HCAデコーダ
 
+This program is strictly for decoding to WAV quickly. If you need a HCA streaming library, consider using [libcgss](https://github.com/hozuki/libcgss).
+
 # Changes to original
  - Multithreaded CRI HCA decoding (much higher performance)
  - Fixed data chunk size
