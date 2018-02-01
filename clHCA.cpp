@@ -671,13 +671,13 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
 
 void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*& outputwavptr, unsigned int chunksize, Semaphore& wavoutsem)
 {
-    int seekhead = 0;
-    char* outwavptr = (char*)outputwavptr + (_mode/8) * blocknum * 1024 * _channelCount + _wavheadersize;
-	char** outwavptrs = new char*[_loopNum + 1];
-	for (int l = 0; l <= _loopNum; ++l)
+	if (outputwavptr == nullptr)
 	{
-		outwavptrs[l] = outwavptr + l * ((_loopEnd - _loopStart - 1) * 1024 + 1023 - _muteFooter) * (_mode / 8) * _channelCount;
+		return;
 	}
+    int seekhead = 0;
+    char* outwavptr = (char*)outputwavptr + ((_mode >> 3) * blocknum * _channelCount << 10) + _wavheadersize;
+	unsigned int loopsize = (((_loopEnd - _loopStart - 1) << 10) + 1023 - _muteFooter) * (_mode >> 3) * _channelCount;
     if(blocknum == 0)
     {
         PrepDecode(channelsOffset, 1);
@@ -701,7 +701,6 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
                     if(outputwavptr == nullptr)
                     {
                         wavoutsem.notify();
-						delete[] outwavptrs;
                         return;
                     }
 					for (int j = 0; j < 0x80; j++) {
@@ -721,14 +720,14 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
 									s = seekhead;
 									if (blocknum + x != _loopEnd || i * 0x80 + j < 1024 - _muteFooter)
 									{
-										((void(*)(float, void *, int&))_modeFunction)(f, outwavptrs[l], s);
+										((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + l * loopsize, s);
 									}
 								}
 								seekhead = s;
 							}
 							else
 							{
-								((void(*)(float, void *, int&))_modeFunction)(f, outwavptrs[_loopNum], seekhead);
+								((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + _loopNum * loopsize, seekhead);
 							}
 						}
 					}
@@ -737,7 +736,6 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
             }
         }
     }
-	delete[] outwavptrs;
 }
 
 void clHCA::DecodeToMemory_DecodeModeFloat(float f, void* ptr, int& seekhead) {
@@ -1545,8 +1543,8 @@ void clHCA::stChannel::Decode5(int index) {
         float *d2 = &d[count2];
         for (int j = 0; j<count1; j++) {
             for (int k = 0; k<count2; k++) {
-                float a = *(s++);
-                float b = *(s++);
+                float& a = *(s++);
+                float& b = *(s++);
                 *(d1++) = b + a;
                 *(d2++) = a - b;
             }
@@ -1565,10 +1563,10 @@ void clHCA::stChannel::Decode5(int index) {
         float *d2 = &d1[count2 * 2 - 1];
         for (int j = 0; j<count1; j++) {
             for (int k = 0; k<count2; k++) {
-                float a = *(s1++);
-                float b = *(s2++);
-                float c = *(list1Float++);
-                float d = *(list2Float++);
+                float& a = *(s1++);
+                float& b = *(s2++);
+                float& c = *(list1Float++);
+                float& d = *(list2Float++);
                 *(d1++) = a * c - b * d;
                 *(d2--) = a * d + b * c;
             }

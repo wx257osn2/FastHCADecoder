@@ -4,14 +4,12 @@ This program is strictly for decoding to WAV quickly. If you need a HCA streamin
 
 # Changes to original
  - Multithreaded CRI HCA decoding (much higher performance)
- - Fixed signed 32 bit integer mode
  - Fixed data chunk size
  - Fixed smpl chunk loop points
  - Fixed looping (original cut samples off the end)
  
 # Changes in JP
  - マルチスレッド化
- - 32ビットモード修正
  - dataチャンク修正
  - smplチャンク修正
  - ループ修正

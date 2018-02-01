@@ -7,19 +7,18 @@ HCADecodeService::HCADecodeService()
 	  mainsem{ this->numthreads },
 	  wavoutsem{ this->numthreads },
 	  workingblocks{ new int[this->numthreads] },
+	  worker_threads{ new std::thread[this->numthreads] },
 	  workersem{ new Semaphore[this->numthreads]{} },
 	  channels{ new clHCA::stChannel[0x10 * this->numthreads] },
-	  chunksize{ 24 },
+	  chunksize{ 16 },
 	  datasem{ 0 },
-	  finsem{ 0 },
 	  numchannels{ 0 },
 	  workingrequest{ nullptr },
-	  cursor{ -1 },
 	  shutdown{ false }
 {
     for (unsigned int i = 0; i < this->numthreads; ++i)
     {
-        worker_threads.emplace_back(&HCADecodeService::Decode_Thread, this, i);
+		worker_threads[i] = std::thread{ &HCADecodeService::Decode_Thread, this, i };
         workingblocks[i] = -1;
     }
     dispatchthread = std::thread{ &HCADecodeService::Main_Thread, this };
@@ -30,19 +29,18 @@ HCADecodeService::HCADecodeService(unsigned int numthreads, unsigned int chunksi
 	  mainsem{ this->numthreads },
 	  wavoutsem{ this->numthreads },
 	  workingblocks{ new int[this->numthreads] },
+	  worker_threads{ new std::thread[this->numthreads] },
 	  workersem{ new Semaphore[this->numthreads]{} },
 	  channels{ new clHCA::stChannel[0x10 * this->numthreads] },
-	  chunksize{ chunksize ? chunksize : 24 },
+	  chunksize{ chunksize ? chunksize : 16 },
 	  datasem{ 0 },
-	  finsem{ 0 },
 	  numchannels{ 0 },
 	  workingrequest{ nullptr },
-	  cursor{ -1 },
 	  shutdown{ false }
 {
     for (unsigned int i = 0; i < this->numthreads; ++i)
     {
-        worker_threads.emplace_back(&HCADecodeService::Decode_Thread, this, i);
+		worker_threads[i] = std::thread{ &HCADecodeService::Decode_Thread, this, i };
         workingblocks[i] = -1;
     }
     dispatchthread = std::thread{ &HCADecodeService::Main_Thread, this };
@@ -55,25 +53,27 @@ HCADecodeService::~HCADecodeService()
     dispatchthread.join();
     delete[] channels;
 	delete[] workersem;
+	delete[] worker_threads;
 }
 
 void HCADecodeService::cancel_decode(void* ptr)
 {
-    mutex.lock();
-    for (auto it = filelist.begin(); it != filelist.end(); ++it)
-    {
-        if (it->first.first == ptr)
-        {
-            filelist.erase(it);
-            break;
-        }
-    }
+	if (ptr == nullptr)
+	{
+		return;
+	}
+    filelistmtx.lock();
+	auto it = filelist.find(ptr);
+	if (it != filelist.end() && it->first == ptr)
+	{
+		filelist.erase(it);
+		datasem.wait();
+	}
+	filelistmtx.unlock();
     if (workingrequest == ptr)
     {
-		cursor = -1;
         workingrequest = nullptr;
     }
-    mutex.unlock();
     for(unsigned int i = 0; i < numthreads; ++i)
     {
         wavoutsem.wait();
@@ -86,34 +86,44 @@ void HCADecodeService::cancel_decode(void* ptr)
 
 void HCADecodeService::wait_on_request(void* ptr)
 {
-	START:
-    mutex.lock();
-	for (auto it = filelist.begin(); it != filelist.end(); ++it)
+	if (ptr == nullptr)
 	{
-		if (it->first.first == ptr)
+		return;
+	}
+	while (true)
+	{
+		filelistmtx.lock();
+		auto it = filelist.find(ptr);
+		if (it != filelist.end() && it->first == ptr)
 		{
-			mutex.unlock();
-			finsem.wait();
-			goto START;
+			filelistmtx.unlock();
+			workingmtx.lock();
+			workingmtx.unlock();
+		}
+		else
+		{
+			filelistmtx.unlock();
+			break;
 		}
 	}
-	mutex.unlock();
-    while (workingrequest == ptr && cursor != -1)
+    if(workingrequest == ptr)
     {
-        finsem.wait();
+		workingmtx.lock();
+		workingmtx.unlock();
     }
 }
 
 void HCADecodeService::wait_for_finish()
 {
-    mutex.lock();
-    while(!filelist.empty() || cursor != -1)
+    filelistmtx.lock();
+    while(!filelist.empty() || workingrequest != nullptr)
     {
-        mutex.unlock();
-        finsem.wait();
-        mutex.lock();
+        filelistmtx.unlock();
+		workingmtx.lock();
+		workingmtx.unlock();
+        filelistmtx.lock();
     }
-    mutex.unlock();
+    filelistmtx.unlock();
 }
 
 std::pair<void*, size_t> HCADecodeService::decode(const char* hcafilename, unsigned int decodefromsample, unsigned int ciphKey1, unsigned int ciphKey2, float volume, int mode, int loop)
@@ -124,10 +134,11 @@ std::pair<void*, size_t> HCADecodeService::decode(const char* hcafilename, unsig
     hca.Analyze(wavptr, sz, hcafilename, volume, mode, loop);
     if (wavptr != nullptr)
     {
-		int decodefromblock = decodefromsample / (1024 * hca.get_channelCount());
-        mutex.lock();
-        filelist[std::make_pair(wavptr, decodefromblock)] = std::move(hca);
-        mutex.unlock();
+		int decodefromblock = decodefromsample / (hca.get_channelCount() << 10);
+        filelistmtx.lock();
+        filelist[wavptr].first = std::move(hca);
+		filelist[wavptr].second = decodefromblock;
+        filelistmtx.unlock();
         datasem.notify();
     }
     return std::pair<void*, size_t>(wavptr, sz);
@@ -142,44 +153,44 @@ void HCADecodeService::Main_Thread()
         {
             break;
         }
-        mutex.lock();
+        filelistmtx.lock();
+		workingmtx.lock();
         auto it = filelist.begin();
-        workingrequest = it->first.first;
-        workingfile = std::move(it->second);
-        unsigned blocknum = it->first.second;
+        workingrequest = it->first;
+        workingfile = std::move(it->second.first);
+        unsigned blocknum = it->second.second;
         filelist.erase(it);
+		filelistmtx.unlock();
         numchannels = workingfile.get_channelCount();
         workingfile.PrepDecode(channels, numthreads);
-        unsigned int blockCount = (workingfile.get_blockCount() * (chunksize + 1)) / chunksize;
+        unsigned int blockCount = workingfile.get_blockCount();
         // initiate playback right away
-		blocks.resize(blockCount/chunksize + 1);
-		cursor = blockCount/chunksize + 1;
-        for (unsigned int i = (blocknum/chunksize)*chunksize; i < blockCount + blocknum; i += chunksize)
+		int sz = blockCount / chunksize + (blockCount % chunksize != 0);
+		unsigned int lim = sz * chunksize + blocknum;
+        for (unsigned int i = (blocknum/chunksize)*chunksize; i < lim; i += chunksize)
         {
-            blocks[--cursor] = i % blockCount;
+            blocks.push_back(i % blockCount);
         }
-		cursor = blockCount / chunksize - 1;
-		mutex.unlock();
-		while(cursor >= 0)
+		while(!blocks.empty())
 		{
-            mainsem.wait();
-            for (unsigned int i = 0; i < numthreads; ++i)
-            {
-                if (workingblocks[i] == -1 && cursor >= 0)
-                {
-					workingblocks[i] = blocks[cursor--];
-                    workersem[i].notify();
-                }
-            }
-            mainsem.notify();
+			mainsem.wait();
+			for (unsigned int i = 0; i < numthreads; ++i)
+			{
+				if (workingblocks[i] == -1 && !blocks.empty())
+				{
+					workingblocks[i] = blocks.front();
+					blocks.pop_front();
+					workersem[i].notify();
+				}
+			}
+			mainsem.notify();
         }
-		mutex.lock();
 		for (unsigned int i = 0; i < numthreads; ++i)
 		{
 			while (workingblocks[i] != -1); // busy wait for threads
 		}
-		mutex.unlock();
-        finsem.notify();
+		workingrequest = nullptr;
+		workingmtx.unlock();
     }
     for (unsigned int i = 0; i < numthreads; ++i)
     {

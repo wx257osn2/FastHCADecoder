@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <thread>
-#include <vector>
+#include <deque>
 #include <map>
 #include "Semaphore.h"
 #include "clHCA.h"
@@ -23,14 +23,13 @@ private:
     unsigned int numthreads, numchannels, chunksize;
     void* workingrequest;
     std::thread dispatchthread;
-    std::vector<std::thread> worker_threads;
-    std::map<std::pair<void*, unsigned int>, clHCA> filelist;
-    std::vector<unsigned int> blocks;
+    std::thread* worker_threads;
+    std::map<void*, std::pair<clHCA, unsigned int>> filelist;
+    std::deque<unsigned int> blocks;
     int* workingblocks;
-	int cursor;
     Semaphore* workersem;
-    Semaphore mainsem, datasem, finsem, wavoutsem;
-    std::mutex mutex;
+    Semaphore mainsem, datasem, wavoutsem;
+    std::mutex filelistmtx, workingmtx;
     clHCA::stChannel* channels;
     bool shutdown;
 };
