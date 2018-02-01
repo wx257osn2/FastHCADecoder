@@ -181,15 +181,20 @@ void HCADecodeService::Main_Thread()
 					workingblocks[i] = blocks.front();
 					blocks.pop_front();
 					workersem[i].notify();
+					mainsem.wait();
 				}
 			}
 			mainsem.notify();
         }
 		for (unsigned int i = 0; i < numthreads; ++i)
 		{
-			while (workingblocks[i] != -1); // busy wait for threads
+			mainsem.wait();
 		}
 		workingrequest = nullptr;
+		for (unsigned int i = 0; i < numthreads; ++i)
+		{
+			mainsem.notify();
+		}
 		workingmtx.unlock();
     }
     for (unsigned int i = 0; i < numthreads; ++i)
@@ -204,7 +209,6 @@ void HCADecodeService::Decode_Thread(int id)
     workersem[id].wait();
     while (workingblocks[id] != -1)
     {
-        mainsem.wait();
         workingfile.AsyncDecode(channels + (id * numchannels), workingblocks[id], workingrequest, chunksize, wavoutsem);
         workingblocks[id] = -1;
         mainsem.notify();
