@@ -660,6 +660,7 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
 	seekhead += sizeof(wavRiff);
     delete[] data1;
     hcafileptr = new unsigned char[_blockCount * _blockSize];
+	fseek(fp1, header.dataOffset, SEEK_SET);
     fread(hcafileptr, _blockCount, _blockSize, fp1);
 	_cipher.Mask(hcafileptr, _blockCount * _blockSize);
 	_wavheadersize = wavRiff.riffSize - wavData.dataSize + 8;
@@ -675,7 +676,7 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
 	{
 		return;
 	}
-    int seekhead = 0;
+	int seekhead = 0;
     char* outwavptr = (char*)outputwavptr + ((_mode >> 3) * blocknum * _channelCount << 10) + _wavheadersize;
 	unsigned int loopsize = (((_loopEnd - _loopStart - 1) << 10) + 1023 - _muteFooter) * (_mode >> 3) * _channelCount;
     if(blocknum == 0)
@@ -708,7 +709,7 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
 							float f = channelsOffset[k].wave[i][j] * _rva_volume;
 							if (f > 1) { f = 1; }
 							else if (f < -1) { f = -1; }
-							if (blocknum + x < _loopStart)
+							if (blocknum + x <= _loopStart)
 							{
 								((void(*)(float, void *, int&))_modeFunction)(f, outwavptr, seekhead);
 							}
