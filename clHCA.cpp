@@ -611,7 +611,7 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
     wavRiff.fmtSamplesPerSec = wavRiff.fmtSamplingRate*wavRiff.fmtSamplingSize;
     if (_loopFlg) {
         wavSmpl.samplePeriod = (unsigned int)(1 / (double)wavRiff.fmtSamplingRate * 1000000000);
-        wavSmpl.loop_Start = _loopStart * 0x80 * 8 + _muteFooter;
+        wavSmpl.loop_Start = _loopStart * 0x80 * 8;
         wavSmpl.loop_End = (_loopEnd) * 0x80 * 8;
         wavSmpl.loop_PlayCount = (_loopCount == 0x80) ? 0 : _loopCount;
     }
@@ -678,7 +678,7 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
 	}
 	int seekhead = 0;
     char* outwavptr = (char*)outputwavptr + ((_mode >> 3) * blocknum * _channelCount << 10) + _wavheadersize;
-	unsigned int loopsize = (((_loopEnd - _loopStart - 1) << 10) + (_loopFlg ? 1024 - _muteFooter : 1024)) * (_mode >> 3) * _channelCount;
+	unsigned int loopsize = (((_loopEnd - _loopStart - 1) << 10) + 1024) * (_mode >> 3) * _channelCount;
     if(blocknum == 0)
     {
         PrepDecode(channelsOffset, 1);
@@ -719,14 +719,11 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
 								for (int l = 0; l <= _loopNum; ++l)
 								{
 									s = seekhead;
-									if (blocknum + x < _loopEnd - 1 || i * 0x80 + j < (_loopFlg ? 1024 - _muteFooter : 1024))
-									{
-										((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + l * loopsize, s);
-									}
+									((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + l * loopsize, s);
 								}
 								seekhead = s;
 							}
-							else if (blocknum + x < _blockCount - 1 || i * 0x80 + j < 1024 - _muteFooter)
+							else
 							{
 								((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + _loopNum * loopsize, seekhead);
 							}
