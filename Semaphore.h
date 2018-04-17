@@ -5,7 +5,8 @@
 #include <mutex>
 #include <condition_variable>
 
-class Semaphore {
+class Semaphore
+{
 public:
     Semaphore(int count_ = 0) : count(count_) {}
 
@@ -19,7 +20,7 @@ public:
     inline void wait()
     {
         std::unique_lock<std::mutex> lock(mtx);
-		cv.wait(lock, [this] { return count > 0; });
+        cv.wait(lock, [this] { return count > 0; });
         --count;
     }
 

@@ -59,7 +59,7 @@ clHCA & clHCA::operator=(clHCA && other)
     _loopStart = other._loopStart;
     _loopEnd = other._loopEnd;
     _loopCount = other._loopCount;
-	_loopNum = other._loopNum;
+    _loopNum = other._loopNum;
     _loop_r01 = other._loop_r01;
     _loopFlg = other._loopFlg;
     _ciph_type = other._ciph_type;
@@ -69,10 +69,10 @@ clHCA & clHCA::operator=(clHCA && other)
     _comm_len = other._comm_len;
     _ath = other._ath;
     _cipher = other._cipher;
-	_rva_volume = other._rva_volume;
-	_mode = other._mode;
-	_modeFunction = other._modeFunction;
-	_wavheadersize = other._wavheadersize;
+    _rva_volume = other._rva_volume;
+    _mode = other._mode;
+    _modeFunction = other._modeFunction;
+    _wavheadersize = other._wavheadersize;
     return *this;
 }
 
@@ -550,7 +550,7 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
         return false;
     }
 
-	_rva_volume = volume;
+    _rva_volume = volume;
 
     // ヘッダ解析
     header.dataOffset = bswap(header.dataOffset);
@@ -628,43 +628,43 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
     wavData.dataSize = wavRiff.fmtSamplingSize*(_blockCount * 0x80 * 8 + (wavSmpl.loop_End - wavSmpl.loop_Start)*loop);
     wavRiff.riffSize = 0x1C + ((_loopFlg && !loop) ? sizeof(wavSmpl) : 0) + (_comm_comment ? 8 + wavNote.noteSize : 0) + sizeof(wavData) + wavData.dataSize;
 
-	_modeFunction = DecodeToMemory_DecodeMode16bit;
-	_mode = 16;
-	switch (mode) {
-	case 0:_modeFunction = DecodeToMemory_DecodeModeFloat; _mode = 32; break;
-	case 8:_modeFunction = DecodeToMemory_DecodeMode8bit; _mode = 8; break;
-	case 16:_modeFunction = DecodeToMemory_DecodeMode16bit; _mode = 16; break;
-	case 24:_modeFunction = DecodeToMemory_DecodeMode24bit; _mode = 24; break;
-	case 32:_modeFunction = DecodeToMemory_DecodeMode32bit; _mode = 32; break;
-	}
+    _modeFunction = DecodeToMemory_DecodeMode16bit;
+    _mode = 16;
+    switch (mode) {
+    case 0:_modeFunction = DecodeToMemory_DecodeModeFloat; _mode = 32; break;
+    case 8:_modeFunction = DecodeToMemory_DecodeMode8bit; _mode = 8; break;
+    case 16:_modeFunction = DecodeToMemory_DecodeMode16bit; _mode = 16; break;
+    case 24:_modeFunction = DecodeToMemory_DecodeMode24bit; _mode = 24; break;
+    case 32:_modeFunction = DecodeToMemory_DecodeMode32bit; _mode = 32; break;
+    }
 
-	sz = wavRiff.riffSize + 8;
+    sz = wavRiff.riffSize + 8;
     wavptr = new char[sz];
     memset(wavptr, 0, sz);
     int seekhead = 0;
-	memmove((char*)wavptr + seekhead, &wavRiff, sizeof(wavRiff));
-	seekhead += sizeof(wavRiff);
-	if (_loopFlg && !loop)
-	{
-		memmove((char*)wavptr + seekhead, &wavSmpl, sizeof(wavSmpl));
-		seekhead += sizeof(wavSmpl);
-	}
-	if (_comm_comment) {
-		int address = seekhead;
-		memmove((char*)wavptr + seekhead, &wavNote, sizeof(wavNote));
-		seekhead += sizeof(wavNote);
-		strcpy((char*)wavptr + seekhead, _comm_comment);
-		seekhead = address + 8 + wavNote.noteSize;
-	}
-	memmove((char*)wavptr + seekhead, &wavData, sizeof(wavData));
-	seekhead += sizeof(wavRiff);
+    memmove((char*)wavptr + seekhead, &wavRiff, sizeof(wavRiff));
+    seekhead += sizeof(wavRiff);
+    if (_loopFlg && !loop)
+    {
+        memmove((char*)wavptr + seekhead, &wavSmpl, sizeof(wavSmpl));
+        seekhead += sizeof(wavSmpl);
+    }
+    if (_comm_comment) {
+        int address = seekhead;
+        memmove((char*)wavptr + seekhead, &wavNote, sizeof(wavNote));
+        seekhead += sizeof(wavNote);
+        strcpy((char*)wavptr + seekhead, _comm_comment);
+        seekhead = address + 8 + wavNote.noteSize;
+    }
+    memmove((char*)wavptr + seekhead, &wavData, sizeof(wavData));
+    seekhead += sizeof(wavRiff);
     delete[] data1;
     hcafileptr = new unsigned char[_blockCount * _blockSize];
-	fseek(fp1, header.dataOffset, SEEK_SET);
+    fseek(fp1, header.dataOffset, SEEK_SET);
     fread(hcafileptr, _blockCount, _blockSize, fp1);
-	_cipher.Mask(hcafileptr, _blockCount * _blockSize);
-	_wavheadersize = wavRiff.riffSize - wavData.dataSize + 8;
-	_loopNum = loop;
+    _cipher.Mask(hcafileptr, _blockCount * _blockSize);
+    _wavheadersize = wavRiff.riffSize - wavData.dataSize + 8;
+    _loopNum = loop;
     // 閉じる
     fclose(fp);
     return true;
@@ -672,13 +672,13 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
 
 void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*& outputwavptr, unsigned int chunksize, Semaphore& wavoutsem)
 {
-	if (outputwavptr == nullptr)
-	{
-		return;
-	}
-	int seekhead = 0;
+    if (outputwavptr == nullptr)
+    {
+        return;
+    }
+    int seekhead = 0;
     char* outwavptr = (char*)outputwavptr + ((_mode >> 3) * blocknum * _channelCount << 10) + _wavheadersize;
-	unsigned int loopsize = (((_loopEnd - _loopStart - 1) << 10) + 1024) * (_mode >> 3) * _channelCount;
+    unsigned int loopsize = (((_loopEnd - _loopStart - 1) << 10) + 1024) * (_mode >> 3) * _channelCount;
     if(blocknum == 0)
     {
         PrepDecode(channelsOffset, 1);
@@ -704,31 +704,31 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
                         wavoutsem.notify();
                         return;
                     }
-					for (int j = 0; j < 0x80; j++) {
-						for (unsigned int k = 0; k < _channelCount; k++) {
-							float f = channelsOffset[k].wave[i][j] * _rva_volume;
-							if (f > 1) { f = 1; }
-							else if (f < -1) { f = -1; }
-							if (blocknum + x < _loopStart)
-							{
-								((void(*)(float, void *, int&))_modeFunction)(f, outwavptr, seekhead);
-							}
-							else if (blocknum + x < _loopEnd)
-							{
-								int s = 0;
-								for (int l = 0; l <= _loopNum; ++l)
-								{
-									s = seekhead;
-									((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + l * loopsize, s);
-								}
-								seekhead = s;
-							}
-							else
-							{
-								((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + _loopNum * loopsize, seekhead);
-							}
-						}
-					}
+                    for (int j = 0; j < 0x80; j++) {
+                        for (unsigned int k = 0; k < _channelCount; k++) {
+                            float f = channelsOffset[k].wave[i][j] * _rva_volume;
+                            if (f > 1) { f = 1; }
+                            else if (f < -1) { f = -1; }
+                            if (blocknum + x < _loopStart)
+                            {
+                                ((void(*)(float, void *, int&))_modeFunction)(f, outwavptr, seekhead);
+                            }
+                            else if (blocknum + x < _loopEnd)
+                            {
+                                int s = 0;
+                                for (int l = 0; l <= _loopNum; ++l)
+                                {
+                                    s = seekhead;
+                                    ((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + l * loopsize, s);
+                                }
+                                seekhead = s;
+                            }
+                            else
+                            {
+                                ((void(*)(float, void *, int&))_modeFunction)(f, outwavptr + _loopNum * loopsize, seekhead);
+                            }
+                        }
+                    }
                     wavoutsem.notify();
                 }
             }
@@ -737,28 +737,28 @@ void clHCA::AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*&
 }
 
 void clHCA::DecodeToMemory_DecodeModeFloat(float f, void* ptr, int& seekhead) {
-	memmove((char*)ptr + seekhead, &f, sizeof(float));
-	seekhead += sizeof(float);
+    memmove((char*)ptr + seekhead, &f, sizeof(float));
+    seekhead += sizeof(float);
 }
 void clHCA::DecodeToMemory_DecodeMode8bit(float f, void* ptr, int& seekhead) {
-	int v = (int)(f * 0x7F + 0x80);
-	memmove((char*)ptr + seekhead, &v, 1);
-	seekhead += 1;
+    int v = (int)(f * 0x7F + 0x80);
+    memmove((char*)ptr + seekhead, &v, 1);
+    seekhead += 1;
 }
 void clHCA::DecodeToMemory_DecodeMode16bit(float f, void* ptr, int& seekhead) {
-	int v = (int)(f * 0x7FFF);
-	memmove((char*)ptr + seekhead, &v, 2);
-	seekhead += 2;
+    int v = (int)(f * 0x7FFF);
+    memmove((char*)ptr + seekhead, &v, 2);
+    seekhead += 2;
 }
 void clHCA::DecodeToMemory_DecodeMode24bit(float f, void* ptr, int& seekhead) {
-	int v = (int)(f * 0x7FFFFF);
-	memmove((char*)ptr + seekhead, &v, 3);
-	seekhead += 3;
+    int v = (int)(f * 0x7FFFFF);
+    memmove((char*)ptr + seekhead, &v, 3);
+    seekhead += 3;
 }
 void clHCA::DecodeToMemory_DecodeMode32bit(float f, void* ptr, int& seekhead) {
-	int v = (int)((double)f * 0x7FFFFFFF);
-	memmove((char*)ptr + seekhead, &v, 4);
-	seekhead += 4;
+    int v = (int)((double)f * 0x7FFFFFFF);
+    memmove((char*)ptr + seekhead, &v, 4);
+    seekhead += 4;
 }
 
 unsigned int clHCA::get_channelCount() const
@@ -1367,8 +1367,8 @@ void clHCA::stChannel::Decode4(int index, unsigned int a, unsigned int b, unsign
         };
         float f1 = ((float *)listInt)[this[1].value2[index]];
         float f2 = f1 - 2.0f;
-		float *s = &block[b];
-		float *d = &this[1].block[b];
+        float *s = &block[b];
+        float *d = &this[1].block[b];
         for (unsigned int i = 0; i<a; i++) {
             *(d++) = *s*f2;
             *(s++) = *s*f1;
@@ -1534,7 +1534,7 @@ void clHCA::stChannel::Decode5(int index) {
             0xBF7FF688,0xBF7FF9D0,0xBF7FFC32,0xBF7FFDDA,0xBF7FFEED,0xBF7FFF8F,0xBF7FFFDF,0xBF7FFFFC,
         }
     };
-	float *s, *d, *s1, *s2;
+    float *s, *d, *s1, *s2;
     s = block; d = wav1;
     for (int i = 0, count1 = 1, count2 = 0x40; i<7; i++, count1 <<= 1, count2 >>= 1) {
         float *d1 = d;

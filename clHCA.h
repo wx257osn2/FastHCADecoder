@@ -173,18 +173,18 @@ private:
     };
     public:
     struct stChannel {
-		float block[0x80];
-		float base[0x80];
+        float block[0x80];
+        float base[0x80];
         char value[0x80];
         char scale[0x80];
         char value2[8];
         int type;
         char *value3;
         unsigned int count;
-		float wav1[0x80];
-		float wav2[0x80];
-		float wav3[0x80];
-		float wave[8][0x80];
+        float wav1[0x80];
+        float wav2[0x80];
+        float wav3[0x80];
+        float wave[8][0x80];
         void Decode1(clData *data, unsigned int a, int b, unsigned char *ath);
         void Decode2(clData *data);
         void Decode3(unsigned int a, unsigned int b, unsigned int c, unsigned int d);
@@ -196,17 +196,17 @@ private:
     void AsyncDecode(stChannel* channelsOffset, unsigned int blocknum, void*& outputwavptr, unsigned int chunksize, Semaphore& wavoutsem);
     private:
     stChannel _channel[0x10];
-	int _mode;
-	int _loopNum;
+    int _mode;
+    int _loopNum;
     unsigned char* hcafileptr;
-	unsigned int _wavheadersize;
+    unsigned int _wavheadersize;
     bool Decode(void *data, unsigned int size, unsigned int address);
-	void* _modeFunction;
-	static void DecodeToMemory_DecodeModeFloat(float f, void* ptr, int& seekhead);
-	static void DecodeToMemory_DecodeMode8bit(float f, void* ptr, int& seekhead);
+    void* _modeFunction;
+    static void DecodeToMemory_DecodeModeFloat(float f, void* ptr, int& seekhead);
+    static void DecodeToMemory_DecodeMode8bit(float f, void* ptr, int& seekhead);
     static void DecodeToMemory_DecodeMode16bit(float f, void* ptr, int& seekhead);
-	static void DecodeToMemory_DecodeMode24bit(float f, void* ptr, int& seekhead);
-	static void DecodeToMemory_DecodeMode32bit(float f, void* ptr, int& seekhead);
+    static void DecodeToMemory_DecodeMode24bit(float f, void* ptr, int& seekhead);
+    static void DecodeToMemory_DecodeMode32bit(float f, void* ptr, int& seekhead);
 };
 
 #endif // CLHCA_H
