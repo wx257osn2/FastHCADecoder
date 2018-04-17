@@ -19,10 +19,7 @@ public:
     inline void wait()
     {
         std::unique_lock<std::mutex> lock(mtx);
-
-        while (count == 0) {
-            cv.wait(lock);
-        }
+		cv.wait(lock, [this] { return count > 0; });
         --count;
     }
 

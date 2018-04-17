@@ -3,6 +3,7 @@
 #include <thread>
 #include <deque>
 #include <map>
+#include <mutex>
 #include "Semaphore.h"
 #include "clHCA.h"
 
@@ -17,10 +18,15 @@ public:
     void wait_on_request(void* ptr);
     void wait_for_finish();
 private:
+	void Main_Thread();
     void Decode_Thread(int id);
-    void Main_Thread();
+	void load_next_request();
+	void populate_block_list();
+	void wait_on_all_threads(Semaphore & sem);
+	void join_workers();
+
     clHCA workingfile;
-    unsigned int numthreads, numchannels, chunksize;
+    unsigned int numthreads, numchannels, chunksize, startingblock;
     void* workingrequest;
     std::thread dispatchthread;
     std::thread* worker_threads;

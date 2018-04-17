@@ -62,26 +62,22 @@ void HCADecodeService::cancel_decode(void* ptr)
 	{
 		return;
 	}
-    filelistmtx.lock();
-	auto it = filelist.find(ptr);
-	if (it != filelist.end() && it->first == ptr)
 	{
-		filelist.erase(it);
-		datasem.wait();
+		std::unique_lock<std::mutex> filelistlock(filelistmtx);
+
+		auto it = filelist.find(ptr);
+		if (it != filelist.end() && it->first == ptr)
+		{
+			filelist.erase(it);
+			datasem.wait();
+		}
 	}
-	filelistmtx.unlock();
     if (workingrequest == ptr)
     {
         workingrequest = nullptr;
     }
-    for(unsigned int i = 0; i < numthreads; ++i)
-    {
-        wavoutsem.wait();
-    }
-    for(unsigned int i = 0; i < numthreads; ++i)
-    {
-        wavoutsem.notify();
-    }
+
+	wait_on_all_threads(wavoutsem);
 }
 
 void HCADecodeService::wait_on_request(void* ptr)
@@ -135,6 +131,10 @@ std::pair<void*, size_t> HCADecodeService::decode(const char* hcafilename, unsig
     if (wavptr != nullptr)
     {
 		int decodefromblock = decodefromsample / (hca.get_channelCount() << 10);
+		if (decodefromblock > hca.get_blockCount())
+		{
+			decodefromblock = 0;
+		}
         filelistmtx.lock();
         filelist[wavptr].first = std::move(hca);
 		filelist[wavptr].second = decodefromblock;
@@ -149,34 +149,33 @@ void HCADecodeService::Main_Thread()
     while (true)
     {
         datasem.wait();
+
         if (shutdown)
         {
             break;
         }
+
         filelistmtx.lock();
 		workingmtx.lock();
-        auto it = filelist.begin();
-        workingrequest = it->first;
-        workingfile = std::move(it->second.first);
-        unsigned blocknum = it->second.second;
-        filelist.erase(it);
+		load_next_request();
 		filelistmtx.unlock();
+
         numchannels = workingfile.get_channelCount();
         workingfile.PrepDecode(channels, numthreads);
-        unsigned int blockCount = workingfile.get_blockCount();
-        // initiate playback right away
-		int sz = blockCount / chunksize + (blockCount % chunksize != 0);
-		unsigned int lim = sz * chunksize + blocknum;
-        for (unsigned int i = (blocknum/chunksize)*chunksize; i < lim; i += chunksize)
-        {
-            blocks.push_back(i % blockCount);
-        }
+
+		populate_block_list();
+
 		while(!blocks.empty())
 		{
 			mainsem.wait();
 			for (unsigned int i = 0; i < numthreads; ++i)
 			{
-				if (workingblocks[i] == -1 && !blocks.empty())
+				if (blocks.empty())
+				{
+					mainsem.notify();
+					goto OUT;
+				}
+				if (workingblocks[i] == -1)
 				{
 					workingblocks[i] = blocks.front();
 					blocks.pop_front();
@@ -186,22 +185,15 @@ void HCADecodeService::Main_Thread()
 			}
 			mainsem.notify();
         }
-		for (unsigned int i = 0; i < numthreads; ++i)
-		{
-			mainsem.wait();
-		}
+	
+	OUT:
+		wait_on_all_threads(mainsem);
 		workingrequest = nullptr;
-		for (unsigned int i = 0; i < numthreads; ++i)
-		{
-			mainsem.notify();
-		}
+
 		workingmtx.unlock();
     }
-    for (unsigned int i = 0; i < numthreads; ++i)
-    {
-        workersem[i].notify();
-        worker_threads[i].join();
-    }
+
+	join_workers();
 }
 
 void HCADecodeService::Decode_Thread(int id)
@@ -214,4 +206,45 @@ void HCADecodeService::Decode_Thread(int id)
         mainsem.notify();
         workersem[id].wait();
     }
+}
+
+void HCADecodeService::load_next_request()
+{
+	auto it = filelist.begin();
+	workingrequest = it->first;
+	workingfile = std::move(it->second.first);
+	startingblock = it->second.second;
+	filelist.erase(it);
+}
+
+void HCADecodeService::populate_block_list()
+{
+	unsigned int blockCount = workingfile.get_blockCount();
+	int sz = blockCount / chunksize + (blockCount % chunksize != 0);
+	unsigned int lim = sz * chunksize + startingblock;
+	for (unsigned int i = (startingblock / chunksize) * chunksize; i < lim; i += chunksize)
+	{
+		blocks.push_back(i % blockCount);
+	}
+}
+
+void HCADecodeService::wait_on_all_threads(Semaphore& sem)
+{
+	for (unsigned int i = 0; i < numthreads; ++i)
+	{
+		sem.wait();
+	}
+	for (unsigned int i = 0; i < numthreads; ++i)
+	{
+		sem.notify();
+	}
+}
+
+void HCADecodeService::join_workers()
+{
+	for (unsigned int i = 0; i < numthreads; ++i)
+	{
+		workersem[i].notify();
+		worker_threads[i].join();
+	}
 }
