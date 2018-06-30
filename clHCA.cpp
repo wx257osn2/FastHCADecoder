@@ -890,14 +890,14 @@ void clHCA::clCipher::Init56(unsigned int key1, unsigned int key2) {
 
     // テーブル2
     unsigned char t2[0x10] = {
-        t1[1],t1[1] ^ t1[6],
-        t1[2] ^ t1[3],t1[2],
-        t1[2] ^ t1[1],t1[3] ^ t1[4],
-        t1[3],t1[3] ^ t1[2],
-        t1[4] ^ t1[5],t1[4],
-        t1[4] ^ t1[3],t1[5] ^ t1[6],
-        t1[5],t1[5] ^ t1[4],
-        t1[6] ^ t1[1],t1[6],
+        t1[1], static_cast<unsigned char>(t1[1] ^ t1[6]),
+        static_cast<unsigned char>(t1[2] ^ t1[3]),t1[2],
+        static_cast<unsigned char>(t1[2] ^ t1[1]),static_cast<unsigned char>(t1[3] ^ t1[4]),
+        t1[3],static_cast<unsigned char>(t1[3] ^ t1[2]),
+        static_cast<unsigned char>(t1[4] ^ t1[5]),t1[4],
+        static_cast<unsigned char>(t1[4] ^ t1[3]),static_cast<unsigned char>(t1[5] ^ t1[6]),
+        t1[5],static_cast<unsigned char>(t1[5] ^ t1[4]),
+        static_cast<unsigned char>(t1[6] ^ t1[1]),t1[6],
     };
 
     // テーブル3

@@ -9,6 +9,7 @@ class Semaphore
 {
 public:
     Semaphore(int count_ = 0) : count(count_) {}
+    Semaphore(unsigned int count_) : count(static_cast<int>(count_)) {}
 
     inline void notify()
     {
