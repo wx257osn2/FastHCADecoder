@@ -130,7 +130,7 @@ std::pair<void*, size_t> HCADecodeService::decode(const char* hcafilename, unsig
     hca.Analyze(wavptr, sz, hcafilename, volume, mode, loop);
     if (wavptr != nullptr)
     {
-        int decodefromblock = decodefromsample / (hca.get_channelCount() << 10);
+        unsigned int decodefromblock = decodefromsample / (hca.get_channelCount() << 10);
         if (decodefromblock > hca.get_blockCount())
         {
             decodefromblock = 0;
