@@ -2,8 +2,13 @@
 //--------------------------------------------------
 // インクルード
 //--------------------------------------------------
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#else
+#define MAX_PATH 260
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
