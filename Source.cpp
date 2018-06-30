@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
         // デフォルト出力ファイル名
         char path[MAX_PATH];
         if (!(filenameOut&&filenameOut[0])) {
-            strcpy_s(path, sizeof(path), argv[i]);
+            strncpy(path, argv[i], sizeof(path));
             char *d1 = strrchr(path, '\\');
             char *d2 = strrchr(path, '/');
             char *e = strrchr(path, '.');
