@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
                 FILE* outfile;
                 if (fopen_s(&outfile, filenameOut, "wb"))
                 {
-                    wavout.first; printf("Error: Failed to create WAVE file.\n");
+                    printf("Error: Failed to create WAVE file.\n");
                     dec.cancel_decode(wavout.first);
                     delete[] wavout.first;
                 }
