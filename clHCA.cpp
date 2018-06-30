@@ -224,7 +224,7 @@ bool clHCA::PrintInfo(const char *filenameHCA) {
         }
         printf("comp1: %d\n", _comp_r01);
         printf("comp2: %d\n", _comp_r02);
-        if (!(_comp_r01 >= 0 && _comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F)) {
+        if (!(/*_comp_r01 >= 0 &&*/ _comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F)) {
             printf("※ comp1とcomp2の範囲は0<=comp1<=comp2<=31です。v2.0現在、comp1は1、comp2は15で固定されています。\n");
         }
         printf("comp3: %d\n", _comp_r03);
@@ -259,7 +259,7 @@ bool clHCA::PrintInfo(const char *filenameHCA) {
         }
         printf("dec1: %d\n", _comp_r01);
         printf("dec2: %d\n", _comp_r02);
-        if (!(_comp_r01 >= 0 && _comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F)) {
+        if (!(/*_comp_r01 >= 0 &&*/ _comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F)) {
             printf("※ dec1とdec2の範囲は0<=dec1<=dec2<=31です。v2.0現在、dec1は1、dec2は15で固定されています。\n");
         }
         printf("dec3: %d\n", _comp_r03);
@@ -285,7 +285,7 @@ bool clHCA::PrintInfo(const char *filenameHCA) {
             printf("※ compまたはdecチャンクですでにCBRが指定されています。\n");
         }
         printf("vbr1: %d\n", _vbr_r01);
-        if (!(_vbr_r01 >= 0 && _vbr_r01 <= 0x1FF)) {
+        if (!(/*_vbr_r01 >= 0 &&*/ _vbr_r01 <= 0x1FF)) {
             printf("※ vbr1の範囲は0～511(0x1FF)です。\n");
         }
         printf("vbr2: %d\n", _vbr_r02);
@@ -316,7 +316,7 @@ bool clHCA::PrintInfo(const char *filenameHCA) {
         _loop_r01 = bswap(loop->r01);
         printf("ループ開始ブロック: %d\n", _loopStart);
         printf("ループ終了ブロック: %d\n", _loopEnd);
-        if (!(_loopStart >= 0 && _loopStart <= _loopEnd && _loopEnd<_blockCount)) {
+        if (!(/*_loopStart >= 0 &&*/ _loopStart <= _loopEnd && _loopEnd<_blockCount)) {
             printf("※ ループ開始ブロックとループ終了ブロックの範囲は、0<=ループ開始ブロック<=ループ終了ブロック<ブロック数 です。\n");
         }
         if (_loopCount == 0x80) {
