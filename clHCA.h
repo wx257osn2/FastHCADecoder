@@ -201,7 +201,7 @@ private:
     unsigned char* hcafileptr;
     unsigned int _wavheadersize;
     bool Decode(void *data, unsigned int size, unsigned int address);
-    void* _modeFunction;
+    void (*_modeFunction)(float, void*, int&);
     static void DecodeToMemory_DecodeModeFloat(float f, void* ptr, int& seekhead);
     static void DecodeToMemory_DecodeMode8bit(float f, void* ptr, int& seekhead);
     static void DecodeToMemory_DecodeMode16bit(float f, void* ptr, int& seekhead);
