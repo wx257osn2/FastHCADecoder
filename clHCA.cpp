@@ -1012,7 +1012,7 @@ bool clHCA::Decode(void *data, unsigned int size, unsigned int address) {
             _comp_r07 = comp->r07;
             _comp_r08 = comp->r08;
             if (!((_blockSize >= 8 && _blockSize <= 0xFFFF) || (_blockSize == 0)))return false;
-            if (!(_comp_r01 >= 0 && _comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F))return false;
+            if (!(_comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F))return false;
         }
 
         // dec
@@ -1028,7 +1028,7 @@ bool clHCA::Decode(void *data, unsigned int size, unsigned int address) {
             _comp_r07 = _comp_r05 - _comp_r06;
             _comp_r08 = 0;
             if (!((_blockSize >= 8 && _blockSize <= 0xFFFF) || (_blockSize == 0)))return false;
-            if (!(_comp_r01 >= 0 && _comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F))return false;
+            if (!(_comp_r01 <= _comp_r02 && _comp_r02 <= 0x1F))return false;
             if (!_comp_r03)_comp_r03 = 1;
         }
         else {
@@ -1040,7 +1040,7 @@ bool clHCA::Decode(void *data, unsigned int size, unsigned int address) {
             stVBR *vbr = (stVBR *)s; s += sizeof(stVBR);
             _vbr_r01 = bswap(vbr->r01);
             _vbr_r02 = bswap(vbr->r02);
-            if (!(_blockSize == 0 && _vbr_r01 >= 0 && _vbr_r01 <= 0x1FF))return false;
+            if (!(_blockSize == 0 && _vbr_r01 <= 0x1FF))return false;
         }
         else {
             _vbr_r01 = 0;
@@ -1064,7 +1064,7 @@ bool clHCA::Decode(void *data, unsigned int size, unsigned int address) {
             _loopCount = bswap(loop->count);
             _loop_r01 = bswap(loop->r01);
             _loopFlg = true;
-            if (!(_loopStart >= 0 && _loopStart <= _loopEnd && _loopEnd<_blockCount))return false;
+            if (!(_loopStart <= _loopEnd && _loopEnd<_blockCount))return false;
         }
         else {
             _loopStart = 0;
