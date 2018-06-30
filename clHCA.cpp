@@ -31,10 +31,7 @@ clHCA::clHCA(unsigned int ciphKey1, unsigned int ciphKey2) :
 
 clHCA & clHCA::operator=(clHCA && other)
 {
-    if(hcafileptr != nullptr)
-    {
-        delete[] hcafileptr;
-    }
+    delete[] hcafileptr;
     hcafileptr = other.hcafileptr;
     other.hcafileptr = nullptr;
     _version = other._version;
@@ -79,10 +76,7 @@ clHCA & clHCA::operator=(clHCA && other)
 
 clHCA::~clHCA()
 {
-    if (hcafileptr != nullptr)
-    {
-        delete[] hcafileptr;
-    }
+    delete[] hcafileptr;
 }
 
 //--------------------------------------------------
