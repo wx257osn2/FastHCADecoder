@@ -1372,7 +1372,8 @@ void clHCA::stChannel::Decode4(int index, unsigned int a, unsigned int b, unsign
         float *d = &this[1].block[b];
         for (unsigned int i = 0; i<a; i++) {
             *(d++) = *s*f2;
-            *(s++) = *s*f1;
+            const auto tmp = *s*f1;
+            *(s++) = tmp;
         }
     }
 }
