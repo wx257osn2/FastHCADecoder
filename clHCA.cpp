@@ -119,8 +119,8 @@ bool clHCA::PrintInfo(const char *filenameHCA) {
     if (!(filenameHCA))return false;
 
     // HCAファイルを開く
-    FILE *fp;
-    if (fopen_s(&fp, filenameHCA, "rb")) {
+    FILE *fp = fopen(filenameHCA, "rb");
+    if (fp == nullptr) {
         printf("Error: ファイルが開けませんでした。\n");
         return false;
     }
@@ -367,8 +367,8 @@ bool clHCA::Decrypt(const char *filenameHCA) {
     if (!(filenameHCA))return false;
 
     // HCAファイルを開く
-    FILE *fp;
-    if (fopen_s(&fp, filenameHCA, "r+b"))return false;
+    FILE *fp = fopen(filenameHCA, "r+b");
+    if (fp == nullptr)return false;
 
     // ヘッダチェック
     stHeader header;
@@ -519,8 +519,8 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
     if (!(filenameHCA))return false;
 
     // HCAファイルを開く
-    FILE *fp;
-    if (fopen_s(&fp, filenameHCA, "rb"))return false;
+    FILE *fp = fopen(filenameHCA, "rb");
+    if (fp == nullptr)return false;
 
     // チェック
     if (!(fp && (mode == 0 || mode == 8 || mode == 16 || mode == 24 || mode == 32) && loop >= 0))

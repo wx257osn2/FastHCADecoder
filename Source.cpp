@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
             }
             else
             {
-                FILE* outfile;
-                if (fopen_s(&outfile, filenameOut, "wb"))
+                FILE* outfile = fopen(filenameOut, "wb");
+                if (outfile == nullptr)
                 {
                     printf("Error: Failed to create WAVE file.\n");
                     dec.cancel_decode(wavout.first);
