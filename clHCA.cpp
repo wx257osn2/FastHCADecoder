@@ -575,7 +575,7 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
         unsigned int fmtSamplesPerSec;
         unsigned short fmtSamplingSize;
         unsigned short fmtBitCount;
-    }wavRiff = { 'R','I','F','F',0,'W','A','V','E','f','m','t',' ',0x10,0,0,0,0,0,0 };
+    }wavRiff = { {'R','I','F','F'},0,{'W','A','V','E'},{'f','m','t',' '},0x10,0,0,0,0,0,0 };
     struct stWAVEsmpl {
         char smpl[4];
         unsigned int smplSize;
@@ -594,16 +594,16 @@ bool clHCA::Analyze(void*& wavptr, size_t& sz, const char* filenameHCA, float vo
         unsigned int loop_End;
         unsigned int loop_Fraction;
         unsigned int loop_PlayCount;
-    }wavSmpl = { 's','m','p','l',0x3C,0,0,0,0x3C,0,0,0,1,0x18,0,0,0,0,0,0 };
+    }wavSmpl = { {'s','m','p','l'},0x3C,0,0,0,0x3C,0,0,0,1,0x18,0,0,0,0,0,0 };
     struct stWAVEnote {
         char note[4];
         unsigned int noteSize;
         unsigned int dwName;
-    }wavNote = { 'n','o','t','e',0,0 };
+    }wavNote = { {'n','o','t','e'},0,0 };
     struct stWAVEdata {
         char data[4];
         unsigned int dataSize;
-    }wavData = { 'd','a','t','a',0 };
+    }wavData = { {'d','a','t','a'},0 };
     wavRiff.fmtType = (mode>0) ? 1 : 3;
     wavRiff.fmtChannelCount = _channelCount;
     wavRiff.fmtBitCount = (mode>0) ? mode : 32;
