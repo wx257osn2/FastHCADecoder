@@ -25,9 +25,7 @@ inline unsigned int ceil2(unsigned int a, unsigned int b) { return (b>0) ? (a / 
 // コンストラクタ
 //--------------------------------------------------
 clHCA::clHCA(unsigned int ciphKey1, unsigned int ciphKey2) :
-    _ciph_key1(ciphKey1), _ciph_key2(ciphKey2), _ath(), _cipher() {
-    hcafileptr = nullptr;
-}
+    _ciph_key1(ciphKey1), _ciph_key2(ciphKey2), _ath(), _cipher(), hcafileptr(nullptr) {}
 
 clHCA & clHCA::operator=(clHCA && other)
 {
