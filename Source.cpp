@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
             char *d2 = strrchr(path, '/');
             char *e = strrchr(path, '.');
             if (e&&d1<e&&d2<e)*e = '\0';
-            strcat_s(path, sizeof(path), ".wav");
+            strncat(path, ".wav", sizeof(path) - strlen(path) - 1);
             filenameOut = path;
         }
 
